@@ -1,12 +1,14 @@
 from model import const
 
 class Word:
+    symbols = []
+    
     @staticmethod
     def is_valid(word):
         return any([
             Word.is_range(word),
             Word.is_quantity(word),
-            # Word.is_symbol(word),:
+            Word.is_symbol(word),
             Word.is_keyword(word),
             Word.is_universal(word),
             Word.is_kwarg(word),
@@ -14,8 +16,8 @@ class Word:
         ])
 
     @staticmethod
-    def is_symbol(word, symbols):
-        return word in symbols
+    def is_symbol(word):
+        return word in Word.symbols
 
     @staticmethod
     def is_universal(word):

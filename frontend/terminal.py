@@ -41,6 +41,9 @@ class LionsharkFrontend:
         )
 
         symbols = self.session.query_symbol()["result"]
+        
+        # TODO:
+        # Word.symbols = symbols ...
 
 class Terminal(LionsharkFrontend):
     def __init__(self, model) -> None:
@@ -58,7 +61,7 @@ class Terminal(LionsharkFrontend):
                 try:
                     self.model.parse(command)
 
-                    if Word.is_symbol(self.model.context, symbols=self.model.symbols):
+                    if Word.is_symbol(self.model.context):
                         self._handle_symbol()
                     elif Word.is_universal(self.model.context):
                         self._handle_universal()
