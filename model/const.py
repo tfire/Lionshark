@@ -46,7 +46,7 @@ UNIVERSALS = [
 
 """The set of keywords that instatiate new variables."""
 INSTANTIATORS = [
-
+    KEYWORD_RETRACE
 ]
 
 BINANCE_STOP_MARKET = 'STOP_MARKET'
