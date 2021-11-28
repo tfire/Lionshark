@@ -53,6 +53,7 @@ class Word:
     
     @staticmethod
     def is_variable(word):
+        # TODO
         return word 
 
     @staticmethod
