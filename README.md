@@ -10,4 +10,8 @@
 `https://github.com/verata-veritatis/pybit/blob/master/pybit/__init__.py`
 
 
+## Showcase
+
+![Example-1](/img/720.gif)
+
 
