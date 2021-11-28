@@ -1,8 +1,4 @@
-from frontend.terminal import LionsharkFrontend, Terminal
-from model.model import Model
+from frontend.terminal import TerminalFrontend
 
-m = Model()
-# ls = LionsharkFrontend(model=m)
-t = Terminal(model=m)
-
-
+t = TerminalFrontend()
+t.run()
