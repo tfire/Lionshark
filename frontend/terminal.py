@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 import traceback
 import subprocess
 import readline
@@ -6,8 +7,8 @@ from pprint import PrettyPrinter
 from model.word import Word
 from private import bybit_keys
 from model import const
+from model.model import Model
 
-# import ccxt
 import pybit
 
 readline.parse_and_bind('set editing-mode emacs')
@@ -23,11 +24,9 @@ def clear_screen():
 def main():
     clear_screen()
 
-class LionsharkFrontend:
-    def __init__(self, model) -> None:
+class Lionshark(ABC):
+    def __init__(self) -> None:
         self.running = False
-        self.model = model
-
         self.session = pybit.HTTP(
             endpoint="https://api.bybit.com",
             api_key=bybit_keys.API_KEY,
@@ -39,59 +38,78 @@ class LionsharkFrontend:
             api_key=bybit_keys.API_KEY,
             api_secret=bybit_keys.API_SEC            
         )
+        Word.symbols = [x["name"] for x in self.session.query_symbol()["result"]]
 
-        symbols = self.session.query_symbol()["result"]
-        
-        # TODO:
-        # Word.symbols = symbols ...
-
-class Terminal(LionsharkFrontend):
-    def __init__(self, model) -> None:
-        super().__init__(model)
+    @abstractmethod
+    def get_input(self):
+        return ""
     
+    @abstractmethod
+    def display_symbol_information(self):
+        return ""
+
     def run(self):
         self.running = True
 
         while self.running:
-            commands = input().upper().split(";")
+            commands = self.get_input().upper().split(";")
+
             for command in commands:
                 if not command:
                     break
                     
                 try:
-                    self.model.parse(command)
-
-                    if Word.is_symbol(self.model.context):
+                    Model.parse(command)
+                    if Word.is_symbol(Model.context()):
                         self._handle_symbol()
-                    elif Word.is_universal(self.model.context):
+                    elif Word.is_universal(Model.context()):
                         self._handle_universal()
-
                 except Exception as exc:
                     traceback.print_exc()
                     print(exc)
     
     def _handle_symbol(self):
-        if len(self.model.words) == 1:
-            self._print_symbol_information()
+        if len(Model.words) == 1:
+            self.display_symbol_information()
             return
-        
+
         self._apply_settings()
         self._execute_current_context()
-    
+
+    def _execute_current_context(self):
+        if Model.side() or Model.stop_loss() or Model.take_profit():
+            self._execute_orders()
+            self.session.place_active_order(
+                symbol=Model.symbol(),
+                side=Model.side(),
+                order_type=Model.order_type(),
+                qty=Model.quantity(),
+                time_in_force="GoodTillCancel"
+            )
+
+        if const.KEYWORD_CANCEL in Model.words:
+            self.session.cancel_active_order(
+                symbol=Model.symbol()
+            )
+
     def _apply_settings(self):
-        for arg in self.model.args:
+        for arg in Model.args:
             if Word.is_leverage_modifier(arg):
                 self._apply_symbol_leverage_settings(leverage=arg)
         
-        for instantiator in (set(self.model.kwargs.keys() & set(const.INSTANTIATORS))):
+        for instantiator in (set(Model.kwargs.keys() & set(const.INSTANTIATORS))):
             self._instantiate_variables(instantiator)
     
     def _apply_symbol_leverage_settings(self, leverage):
         self.session.set_leverage(
-            symbol=self.model.context,
+            symbol=Model.context(),
             buy_leverage=leverage,
             sell_leverage=leverage,
         )
+
+    def _handle_universal(self):
+        # TODO
+        return
 
     # def _instantiate_variables(instantiator):
     #     if instantiator == const.KEYWORD_RETRACE:
@@ -105,11 +123,23 @@ class Terminal(LionsharkFrontend):
 
     #         model.VARIABLES[fo_transform._SYMBOL()][fibname] = float("{:.2f}".format(y2 - (diff * fibval)))
 
-    def _execute_current_context(self):
-        return
+
+class TerminalFrontend(Lionshark):
+    def __init__(self, model) -> None:
+        super().__init__(model)
     
-    def _handle_universal(self):
-        return
-    
-    def _print_symbol_information(self):
+    def get_input(self):
+        return ""
+
+    def display_symbol_information(self):
+        return ""
+
+class DiscordFrontend(Lionshark):
+    def __init__(self, model) -> None:
+        super().__init__(model)
+
+    def get_input(self):
+        return ""
+
+    def display_symbol_information(self):
         return
